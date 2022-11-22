@@ -1,31 +1,29 @@
 package org.acme;
 
-import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Emitter;
+import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.reactive.ReactiveMailer;
+import io.quarkus.qute.Template;
+import io.smallrye.mutiny.Uni;
+import io.vertx.core.json.JsonObject;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 
 
-@Path("/hello")
+@ApplicationScoped
 public class GreetingResource {
 
-    @Channel("quote-requests")
-  Emitter<String> quoteRequestEmitter;
+  @Inject
+  Template welcome;
+
+  @Inject
+  ReactiveMailer reactiveMailer;
 
   @Incoming("requests")
-  public void process(byte[] quoteRequest) throws InterruptedException {
-    System.out.println("Received request: " + new String(quoteRequest));
-  }
-
-  @GET
-  @Produces(MediaType.TEXT_PLAIN)
-  public String hello() {
-    System.out.println("Sending request");
-    quoteRequestEmitter.send("Hello romain");
-    return "Hello from RESTEasy Reactive with Quarkus";
+  public Uni<Void> process(JsonObject quoteRequest) {
+    NestedData data = quoteRequest.getJsonObject("data").mapTo(NestedData.class);
+    System.out.printf("✉️ Received request for %s %s with email %s%n", data.firstName, data.lastName, data.email);
+    return reactiveMailer.send(Mail.withHtml(data.email, "❤️ A big welcome from KittenAsso's", welcome.data("firstName", data.firstName).data("lastName", data.lastName).render()));
   }
 }

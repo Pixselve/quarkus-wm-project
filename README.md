@@ -1,12 +1,21 @@
-# code-with-quarkus Project
+# Kitten Asso's Mailer
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
 If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
 
+## Architecture
+
+```mermaid
+graph LR
+    A[RabbitMQ queue] -- Message containing name and email --> B[Quarkus Microservice]
+    B -- Send an email --> C[SMTP server]
+```
+
 ## Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:
+
 ```shell script
 ./mvnw compile quarkus:dev
 ```
