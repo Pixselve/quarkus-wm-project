@@ -9,3 +9,8 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
+  smtp:
+    image: soulteary/maildev
+    ports:
+      - 1080:1080
+      - 1025:1025
