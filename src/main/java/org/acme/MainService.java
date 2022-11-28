@@ -83,7 +83,7 @@ public class MainService {
 
   }
 
-  @Incoming("requests")
+  @Incoming("registration_confirmation")
   public Uni<Void> onRequest(JsonObject quoteRequest) {
     UserRegistration data = quoteRequest.getJsonObject("data").mapTo(UserRegistration.class);
     Log.info("New user registered");
