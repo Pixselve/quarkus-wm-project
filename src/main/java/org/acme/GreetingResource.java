@@ -38,8 +38,9 @@ public class GreetingResource {
     try {
       Event e = event.getJsonObject("data").mapTo(Event.class);
 
-      Instant start = Instant.ofEpochSecond(e.start);
-      Instant end = Instant.ofEpochSecond(e.end);
+
+      Instant start = Instant.parse(e.start);
+      Instant end = Instant.parse(e.end);
       DateTime startDateTime = new DateTime(Date.from(start));
       DateTime endDateTime = new DateTime(Date.from(end));
 

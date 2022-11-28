@@ -7,8 +7,8 @@ import java.util.Arrays;
 @RegisterForReflection
 public class Event {
   public String name;
-  public long start;
-  public long end;
+  public String start;
+  public String end;
 
   public String associationName;
 
