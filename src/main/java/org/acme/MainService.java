@@ -23,7 +23,7 @@ import java.util.Date;
 
 
 @ApplicationScoped
-public class GreetingResource {
+public class MainService {
 
   @Inject
   Template welcome;
