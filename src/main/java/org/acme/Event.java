@@ -2,11 +2,11 @@ package org.acme;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
+import java.util.Arrays;
+
 @RegisterForReflection
 public class Event {
   public String name;
-  public String description;
-  public String location;
   public long start;
   public long end;
 
@@ -21,10 +21,10 @@ public class Event {
   public String toString() {
     return "Event{" +
         "name='" + name + '\'' +
-        ", description='" + description + '\'' +
-        ", location='" + location + '\'' +
-        ", start='" + start + '\'' +
-        ", end='" + end + '\'' +
+        ", start=" + start +
+        ", end=" + end +
+        ", associationName='" + associationName + '\'' +
+        ", attendeesEmails=" + Arrays.toString(attendeesEmails) +
         '}';
   }
 }
