@@ -28,7 +28,7 @@ public class GreetingResource {
 
 
   @Incoming("events")
-  public void onEvent(JsonObject event) {
+  public Uni<Void> onEvent(JsonObject event) {
     Log.info("New association event created");
     try {
       Event e = event.getJsonObject("data").mapTo(Event.class);
@@ -51,7 +51,7 @@ public class GreetingResource {
       System.out.println(icsCalendar);
 
       return reactiveMailer.send(Mail.withText(
-              data.email,
+              e.attendeesEmails[0],
               "Invitation: " + e.name + " from " + e.associationName,
               "You have been invited to an event.")
           .addAttachment("invitation.ics", icsCalendar.toString().getBytes(), "text/calendar"));
@@ -60,6 +60,8 @@ public class GreetingResource {
     } catch (DecodeException e) {
       Log.error("Error while creating event", e);
     }
+
+    return Uni.createFrom().voidItem();
 
   }
 
