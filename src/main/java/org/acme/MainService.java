@@ -86,7 +86,7 @@ public class MainService {
   @Incoming("requests")
   public Uni<Void> onRequest(JsonObject quoteRequest) {
     NestedData data = quoteRequest.getJsonObject("data").mapTo(NestedData.class);
-    System.out.printf("✉️ Received request for %s %s with email %s%n", data.firstName, data.lastName, data.email);
+    Log.info("New user registered");
     return reactiveMailer.send(Mail.withHtml(data.email, "❤️ A big welcome from KittenAsso's", welcome.data("firstName", data.firstName).data("lastName", data.lastName).render()));
   }
 }
