@@ -13,6 +13,8 @@ import net.fortuna.ical4j.model.parameter.Role;
 import net.fortuna.ical4j.model.property.Attendee;
 import net.fortuna.ical4j.model.property.CalScale;
 import net.fortuna.ical4j.model.property.ProdId;
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Timed;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -33,6 +35,8 @@ public class MainService {
 
 
   @Incoming("events")
+  @Counted(description = "How many creation event request has been made", absolute = true, name = "countEventCreation")
+  @Timed(name = "creationEventTime", description = "A measure of how long it takes to handle the event creation request", unit = "milliseconds")
   public Uni<Void> onEvent(JsonObject event) {
     Log.info("New association event created");
     try {
@@ -84,6 +88,8 @@ public class MainService {
   }
 
   @Incoming("registration_confirmation")
+  @Counted(description = "How many registration confirmation request has been made", absolute = true, name = "countRegistrationConfirmation")
+  @Timed(name = "registrationConfirmationTime", description = "A measure of how long it takes to handle the registration confirmation request", unit = "milliseconds")
   public Uni<Void> onRequest(JsonObject quoteRequest) {
     UserRegistration data = quoteRequest.getJsonObject("data").mapTo(UserRegistration.class);
     Log.info("New user registered");
