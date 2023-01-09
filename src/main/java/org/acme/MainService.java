@@ -93,6 +93,6 @@ public class MainService {
   public Uni<Void> onRequest(JsonObject quoteRequest) {
     UserRegistration data = quoteRequest.getJsonObject("data").mapTo(UserRegistration.class);
     Log.info("New user registered");
-    return reactiveMailer.send(Mail.withHtml(data.email, "❤️ A big welcome from KittenAsso's", welcome.data("firstName", data.firstName).data("lastName", data.lastName).render()));
+    return reactiveMailer.send(Mail.withHtml(data.email, "❤️ A big welcome from KittenAsso's", welcome.data("firstName", data.firstName).data("lastName", data.lastName).data("verifLink", data.validationUrl).render()));
   }
 }
