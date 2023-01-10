@@ -20,79 +20,82 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.net.URI;
-import java.time.Instant;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 
 @ApplicationScoped
 public class MainService {
 
-  @Inject
-  Template welcome;
+    @Inject
+    Template welcome;
 
-  @Inject
-  ReactiveMailer reactiveMailer;
-
-
-  @Incoming("events")
-  @Counted(description = "How many creation event request has been made", absolute = true, name = "countEventCreation")
-  @Timed(name = "creationEventTime", description = "A measure of how long it takes to handle the event creation request", unit = "milliseconds")
-  public Uni<Void> onEvent(JsonObject event) {
-    Log.info("New association event created");
-    try {
-      Event e = event.getJsonObject("data").mapTo(Event.class);
+    @Inject
+    ReactiveMailer reactiveMailer;
 
 
-      Instant start = Instant.parse(e.start);
-      Instant end = Instant.parse(e.end);
-      DateTime startDateTime = new DateTime(Date.from(start));
-      DateTime endDateTime = new DateTime(Date.from(end));
+    @Incoming("events")
+    @Counted(description = "How many creation event request has been made", absolute = true, name = "countEventCreation")
+    @Timed(name = "creationEventTime", description = "A measure of how long it takes to handle the event creation request", unit = "milliseconds")
+    public Uni<Void> onEvent(JsonObject event) {
+        Log.info("New event event created");
+        try {
+            Event e = event.getJsonObject("data").mapTo(Event.class);
+            Log.info("Event created: " + e.toString());
 
-      VEvent meeting = new VEvent(startDateTime, endDateTime, e.name);
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+            LocalDateTime startDateTime2 = LocalDateTime.parse(e.start, formatter);
+            LocalDateTime endDateTime2 = LocalDateTime.parse(e.end, formatter);
 
-      net.fortuna.ical4j.model.Calendar icsCalendar = new net.fortuna.ical4j.model.Calendar();
+            DateTime startDateTime = new DateTime(startDateTime2.toInstant(ZoneOffset.UTC).toEpochMilli());
+            DateTime endDateTime = new DateTime(endDateTime2.toInstant(ZoneOffset.UTC).toEpochMilli());
 
-      icsCalendar.getProperties().add(new ProdId("-//Events Calendar//iCal4j 1.0//EN"));
-      icsCalendar.getProperties().add(CalScale.GREGORIAN);
+            VEvent meeting = new VEvent(startDateTime, endDateTime, e.name);
 
-      for (String attendeesEmail : e.attendeesEmails) {
-        Attendee attendee = new Attendee(URI.create("mailto:" + attendeesEmail));
-        attendee.getParameters().add(Role.REQ_PARTICIPANT);
-        meeting.getProperties().add(attendee);
-      }
+            net.fortuna.ical4j.model.Calendar icsCalendar = new net.fortuna.ical4j.model.Calendar();
 
-      // Add the event and print
-      icsCalendar.getComponents().add(meeting);
+            icsCalendar.getProperties().add(new ProdId("-//Events Calendar//iCal4j 1.0//EN"));
+            icsCalendar.getProperties().add(CalScale.GREGORIAN);
 
+            for (String attendeesEmail : e.attendeesEmails) {
+                Attendee attendee = new Attendee(URI.create("mailto:" + attendeesEmail));
+                attendee.getParameters().add(Role.REQ_PARTICIPANT);
+                meeting.getProperties().add(attendee);
+            }
 
-      Mail mail = Mail.withText(
-          e.attendeesEmails[0],
-          "Invitation: " + e.name + " from " + e.associationName,
-          "You have been invited to an event.");
-
-      mail.addAttachment("event.ics", icsCalendar.toString().getBytes(), "text/calendar");
+            // Add the event and print
+            icsCalendar.getComponents().add(meeting);
 
 
-      for (int i = 1; i < e.attendeesEmails.length; i++) {
-        mail.addCc(e.attendeesEmails[i]);
-      }
+            Mail mail = Mail.withText(
+                    e.attendeesEmails[0],
+                    "Invitation: " + e.name + " from " + e.associationName,
+                    "You have been invited to an event.");
 
-      return reactiveMailer.send(mail);
+            mail.addAttachment("event.ics", icsCalendar.toString().getBytes(), "text/calendar");
 
-    } catch (DecodeException e) {
-      Log.error("Error while creating event", e);
+
+            for (int i = 1; i < e.attendeesEmails.length; i++) {
+                mail.addCc(e.attendeesEmails[i]);
+            }
+
+            return reactiveMailer.send(mail);
+
+        } catch (DecodeException e) {
+            Log.error("Error while creating event", e);
+        }
+
+        return Uni.createFrom().voidItem();
+
     }
 
-    return Uni.createFrom().voidItem();
-
-  }
-
-  @Incoming("registration_confirmation")
-  @Counted(description = "How many registration confirmation request has been made", absolute = true, name = "countRegistrationConfirmation")
-  @Timed(name = "registrationConfirmationTime", description = "A measure of how long it takes to handle the registration confirmation request", unit = "milliseconds")
-  public Uni<Void> onRequest(JsonObject quoteRequest) {
-    UserRegistration data = quoteRequest.getJsonObject("data").mapTo(UserRegistration.class);
-    Log.info("New user registered");
-    return reactiveMailer.send(Mail.withHtml(data.email, "❤️ A big welcome from KittenAsso's", welcome.data("firstName", data.firstName).data("lastName", data.lastName).data("verifLink", data.validationUrl).render()));
-  }
+    @Incoming("registration_confirmation")
+    @Counted(description = "How many registration confirmation request has been made", absolute = true, name = "countRegistrationConfirmation")
+    @Timed(name = "registrationConfirmationTime", description = "A measure of how long it takes to handle the registration confirmation request", unit = "milliseconds")
+    public Uni<Void> onRequest(JsonObject quoteRequest) {
+        UserRegistration data = quoteRequest.getJsonObject("data").mapTo(UserRegistration.class);
+        Log.info("New user registered");
+        return reactiveMailer.send(Mail.withHtml(data.email, "❤️ A big welcome from KittenAsso's", welcome.data("firstName", data.firstName).data("lastName", data.lastName).data("verifLink", data.validationUrl).render()));
+    }
 }
